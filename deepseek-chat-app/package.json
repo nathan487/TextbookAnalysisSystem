@@ -9,8 +9,10 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "start:server": "powershell -ExecutionPolicy Bypass -File start-server.ps1",
-    "dev": "concurrently \"npm start\" \"npm run start:server\""
+    "start:server": "node server/index.js",
+    "start:server:win": "powershell -ExecutionPolicy Bypass -File start-server.ps1",
+    "dev": "concurrently \"npm start\" \"npm run start:server\"",
+    "dev:win": "concurrently \"npm start\" \"npm run start:server:win\""
   },
   "keywords": [
     "chat",

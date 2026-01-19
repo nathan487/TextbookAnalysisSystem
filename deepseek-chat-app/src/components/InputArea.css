@@ -101,6 +101,17 @@
   cursor: not-allowed;
 }
 
+.audio-button {
+  font-size: 20px;
+  padding: 0 15px;
+}
+
+.audio-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: scale(1.05);
+}
+
 .send-button {
   padding: 0 25px;
   border: none;
