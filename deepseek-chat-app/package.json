@@ -1,0 +1,55 @@
+{
+  "name": "deepseek-chat-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DeepSeek风格的聊天应用",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "start:server": "powershell -ExecutionPolicy Bypass -File start-server.ps1",
+    "dev": "concurrently \"npm start\" \"npm run start:server\""
+  },
+  "keywords": [
+    "chat",
+    "ai",
+    "react",
+    "typescript"
+  ],
+  "author": "wenbo",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "katex": "^0.16.27",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.8",
+    "@types/node": "^20.19.30",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "concurrently": "^9.2.1",
+    "react-scripts": "^5.0.1",
+    "typescript": "^4.9.5"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
