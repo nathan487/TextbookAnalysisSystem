@@ -54,6 +54,7 @@ if (!API_KEY) {
 // 当回答中包含数学公式时，请使用美元格式的LaTeX写法。
 // 注意！！！禁止使用[]格式的latex格式。
 
+
 // 系统提示
 const SYSTEM_PROMPT = `
 你是一个教材分析与学习辅助系统。
@@ -65,6 +66,85 @@ const SYSTEM_PROMPT = `
 5. 不要编造定义、例子或结论
 详细地将这本书的知识点进行总结，只能根据书中的内容做总结，生成知识图谱或者思维导图，每一个
 书中涉及到的知识点都要讲到`;
+
+// 模型特定系统提示函数
+const getModelSpecificPrompt = (modelId) => {
+  if (modelId.includes('DeepSeek-V3.2')) {
+    return `
+    你是一个基于知识储备雄厚的AI助手。
+    请你遵循用户命令、满足用户需求、解答用户疑问。
+    当回答中包含数学公式时，请使用美元格式的LaTeX写法。
+    注意！！！禁止使用[]格式的latex格式进行回答。
+    `;
+  } else if (modelId.includes('DeepSeek-OCR')) {
+        return `
+    你是一个基于知识储备雄厚的AI助手。你特别擅长：
+    1. 图像文字识别（OCR）
+    2. 从图片中提取和分析文本内容
+    3. 视觉文档理解
+    4. 文本内容分析
+      
+    请你识别图片并完整正确地提取出其中的文字信息
+    `;
+  } 
+  else {
+        return `
+    你是一个基于知识储备雄厚的AI助手。
+    请你遵循用户命令、满足用户需求、解答用户疑问。
+    当回答中包含数学公式时，请使用美元格式的LaTeX写法。
+    注意！！！禁止使用[]格式的latex格式进行回答。
+    `;
+  }
+};
+
+// // 模型特定系统提示函数
+// const getModelSpecificPrompt = (modelId) => {
+//     return SYSTEM_PROMPT; // 使用默认系统提示
+// };
+
+// 获取模型能力描述
+const getCurrentModelCapabilities = (modelId) => {
+  const capabilities = {
+    'deepseek-ai/DeepSeek-V3.2': {
+      name: 'DeepSeek-V3.2',
+      strength: '代码生成、文本分析、文件处理',
+      context: '128K',
+      note: '特别适合编程和技术文档分析'
+    },
+    'deepseek-ai/DeepSeek-OCR': {
+      name: 'DeepSeek-OCR',
+      strength: '图像文字识别、视觉文档处理',
+      context: '128K',
+      note: '可以从图片中提取和分析文字内容'
+    },
+    'Qwen/Qwen3-VL-32B-Instruct': {
+      name: 'Qwen3-VL-32B',
+      strength: '多模态推理、视觉理解、综合分析',
+      context: '32K',
+      note: '强大的视觉和文本综合分析能力'
+    },
+    'Qwen/Qwen2.5-VL-72B-Instruct': {
+      name: 'Qwen2.5-VL-72B',
+      strength: '视觉语言模型',
+      context: '8K',
+      note: '支持图像理解和文本分析'
+    },
+    'Qwen/Qwen2.5-72B-Instruct': {
+      name: 'Qwen2.5-72B',
+      strength: '纯文本语言模型',
+      context: '32K',
+      note: '通用文本对话和代码生成'
+    }
+  };
+  
+  return capabilities[modelId] || { 
+    name: modelId, 
+    strength: '通用对话',
+    context: '未知',
+    note: ''
+  };
+};
+
 
 // 支持的文件类型 - 使用对象来映射MIME类型到目录
 const FILE_TYPE_MAP = {
@@ -367,7 +447,7 @@ app.post('/api/upload/multiple', upload.array('files', 10), async (req, res) => 
   }
 });
 
-// =============== 主要聊天接口 ===============
+
 // =============== 主要聊天接口 ===============
 app.post('/api/chat/stream', async (req, res) => {
   try {
@@ -382,10 +462,20 @@ app.post('/api/chat/stream', async (req, res) => {
     console.log('📁 附带文件数量:', files?.length || 0);
     console.log('🤖 使用模型:', model);
     
+    // 根据模型选择系统提示
+    const modelSpecificPrompt = getModelSpecificPrompt(model);
+    const modelCapabilities = getCurrentModelCapabilities(model);
+    
+    console.log('📝 模型能力:', {
+      name: modelCapabilities.name,
+      strength: modelCapabilities.strength,
+      context: modelCapabilities.context
+    });
+    
     const messages = [
       {
         role: 'system',
-        content: SYSTEM_PROMPT
+        content: modelSpecificPrompt
       }
     ];
 
@@ -395,8 +485,8 @@ app.post('/api/chat/stream', async (req, res) => {
       let hasDocuments = false;
       
       for (const file of files) {
-        // 处理图片
-        if (file.supportedByDeepSeek && file.type && file.type.startsWith('image/')) {
+        // 处理图片 - 对于不同模型，图片处理方式不同
+        if (file.type && file.type.startsWith('image/')) {
           try {
             console.log('🖼️ 处理图片:', file.name);
             
@@ -414,17 +504,27 @@ app.post('/api/chat/stream', async (req, res) => {
             if (filePath && fs.existsSync(filePath)) {
               const imageBuffer = await fs.promises.readFile(filePath);
               const mimeType = file.type || 'image/png';
-              const base64 = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
               
-              userContent.push({
-                type: 'image_url',
-                image_url: {
-                  url: base64
-                }
-              });
-              
-              hasImages = true;
-              console.log('✅ 图片处理完成:', file.name);
+              // 对于支持视觉的模型，发送base64图片
+              if (model.includes('DeepSeek-OCR') || model.includes('Qwen3-VL') || model.includes('Qwen2.5-VL')) {
+                const base64 = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+                
+                userContent.push({
+                  type: 'image_url',
+                  image_url: {
+                    url: base64
+                  }
+                });
+                
+                hasImages = true;
+                console.log(`✅ 图片发送给${model.includes('DeepSeek-OCR') ? 'DeepSeek-OCR' : '视觉模型'}:`, file.name);
+              } else {
+                // 对于不支持视觉的模型，添加图片描述
+                userContent.push({
+                  type: 'text',
+                  text: `[图片文件: ${file.name}] (当前模型不支持直接分析图片，如需分析请切换至视觉模型)`
+                });
+              }
             } else {
               console.warn('❌ 图片文件不存在:', filePath);
               userContent.push({
@@ -471,13 +571,26 @@ app.post('/api/chat/stream', async (req, res) => {
                 let fileContent = result.text;
                 
                 // 添加文档信息
-                let docInfo = `【${file.name} 内容】\n`;
+                let docInfo = `【${file.name} 内容】`;
+                
+                // 根据不同模型添加不同提示
+                if (model.includes('DeepSeek-V3.2')) {
+                  docInfo += `\n📊 使用DeepSeek-V3.2分析 - 擅长代码和文本分析\n`;
+                } else if (model.includes('Qwen3-VL-32B')) {
+                  docInfo += `\n🧠 使用Qwen3-VL-32B分析 - 擅长多模态推理\n`;
+                }
                 
                 if (file.type === 'application/pdf' && result.pages) {
                   docInfo += `📄 共 ${result.pages} 页\n\n`;
                 } else if ((file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
                            file.type === 'application/msword') && result.messages) {
                   docInfo += `📝 Word文档\n\n`;
+                }
+                
+                // 截断过长的内容
+                const maxLength = model.includes('DeepSeek-V3.2') ? 30000 : 15000;
+                if (fileContent.length > maxLength) {
+                  fileContent = fileContent.substring(0, maxLength) + '\n\n... (内容已截断，完整分析请使用更高上下文模型)';
                 }
                 
                 userContent.push({
@@ -554,6 +667,12 @@ app.post('/api/chat/stream', async (req, res) => {
     }
 
     console.log('🚀 发送请求到SiliconFlow API...');
+    console.log('📊 模型配置:', {
+      model: model,
+      max_tokens: max_tokens,
+      context_length: modelCapabilities.context,
+      supports_vision: model.includes('DeepSeek-OCR') || model.includes('Qwen3-VL') || model.includes('Qwen2.5-VL')
+    });
     
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -561,15 +680,33 @@ app.post('/api/chat/stream', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('X-Accel-Buffering', 'no');
 
+    // 根据模型调整参数
+    let adjustedMaxTokens = max_tokens;
+    if (model.includes('Qwen2.5-VL-72B')) {
+      adjustedMaxTokens = Math.min(max_tokens, 8192); // Qwen2.5-VL 最大8192
+    } else if (model.includes('DeepSeek-V3.2') || model.includes('DeepSeek-OCR')) {
+      adjustedMaxTokens = Math.min(max_tokens, 32768); // DeepSeek 最大32768
+    } else if (model.includes('Qwen3-VL-32B')) {
+      adjustedMaxTokens = Math.min(max_tokens, 32768); // Qwen3-VL 最大32768
+    }
+
     const requestData = {
       model: model,
       messages: messages,
-      max_tokens: max_tokens,
+      max_tokens: adjustedMaxTokens,
       stream: true,
       temperature: 0.7
     };
 
     try {
+      // 在发送请求前先发送模型信息
+      res.write(`data: ${JSON.stringify({ 
+        type: 'model_info',
+        model: modelCapabilities.name,
+        strength: modelCapabilities.strength,
+        context: modelCapabilities.context
+      })}\n\n`);
+
       const response = await axios({
         method: 'post',
         url: `${SILICONFLOW_API_URL}/chat/completions`,
@@ -665,25 +802,57 @@ app.post('/api/chat/stream', async (req, res) => {
   }
 });
 
+
 // =============== 其他接口 ===============
 app.get('/api/models', (req, res) => {
   res.json({
     models: [
+      // 新增的模型
+      {
+        id: 'deepseek-ai/DeepSeek-V3.2',
+        name: 'DeepSeek-V3.2',
+        description: '最新版DeepSeek，强大的代码和文本分析能力',
+        max_tokens: 32768,
+        vision: false,
+        supports: ['代码生成', '文本分析', '文件分析', '数学推理'],
+        context_length: 128000
+      },
+      {
+        id: 'deepseek-ai/DeepSeek-OCR',
+        name: 'DeepSeek-OCR',
+        description: '视觉OCR模型，支持图像文字识别',
+        max_tokens: 32768,
+        vision: true,
+        supports: ['图像识别', 'OCR文字提取', '文本分析'],
+        context_length: 128000
+      },
+      {
+        id: 'Qwen/Qwen3-VL-32B-Instruct',
+        name: 'Qwen3-VL-32B',
+        description: '多模态视觉模型，支持推理和文件分析',
+        max_tokens: 32768,
+        vision: true,
+        supports: ['视觉理解', '复杂推理', '文件分析', '文本分析'],
+        context_length: 32000
+      },
+      // 原有的模型
+      {
+        id: 'Qwen/Qwen2.5-VL-72B-Instruct',
+        name: 'Qwen2.5-VL-72B',
+        description: '视觉语言模型',
+        max_tokens: 8192,
+        vision: true,
+        supports: ['图像识别', '文本理解'],
+        context_length: 8192
+      },
       {
         id: 'Qwen/Qwen2.5-72B-Instruct',
         name: 'Qwen2.5-72B',
         description: '纯文本语言模型',
         max_tokens: 32768,
         vision: false,
-        supports: ['文本对话', '代码生成']
-      },
-      {
-        id: 'Qwen/Qwen2.5-VL-72B-Instruct',
-        name: 'Qwen2.5-VL-72B',
-        description: '视觉语言模型（需要配置图片base64）',
-        max_tokens: 8192,
-        vision: true,
-        supports: ['图像识别', '文本理解']
+        supports: ['文本对话', '代码生成'],
+        context_length: 32768
       }
     ]
   });

@@ -164,7 +164,8 @@ export const simulateStreamResponse = async (
 function processLine(
   dataStr: string,
   onChunk: (chunk: string) => void,
-  onError: (error: string) => void
+  onError: (error: string) => void,
+  onModelInfo?: (info: { model: string; strength: string; context: string }) => void  // 新增参数
 ) {
   if (dataStr.trim() === '') return;
   
@@ -177,6 +178,12 @@ function processLine(
     
     if (data.type === 'chunk' && data.content) {
       onChunk(data.content);
+    } else if (data.type === 'model_info' && onModelInfo) {
+      onModelInfo({
+        model: data.model,
+        strength: data.strength,
+        context: data.context
+      });
     } else if (data.type === 'error') {
       onError(data.message || '未知错误');
     }

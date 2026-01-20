@@ -20,6 +20,7 @@ interface ModelInfo {
   max_tokens: number;
   vision: boolean;
   supports: string[];
+  context_length?: number;  // 添加可选字段
 }
 
 const ChatInterface: React.FC = () => {
@@ -34,25 +35,58 @@ const ChatInterface: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isUsingRealAPI, setIsUsingRealAPI] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
-  const [availableModels, setAvailableModels] = useState<ModelInfo[]>([
-    {
-      id: 'Qwen/Qwen2.5-VL-72B-Instruct',
-      name: 'Qwen2.5-VL-72B',
-      description: '强大的视觉语言模型',
-      max_tokens: 8192,
-      vision: true,
-      supports: ['图像识别', 'PDF分析']
-    },
-    {
-      id: 'Qwen/Qwen2.5-72B-Instruct',
-      name: 'Qwen2.5-72B',
-      description: '纯文本语言模型',
-      max_tokens: 32768,
-      vision: false,
-      supports: ['文本对话']
-    }
-  ]);
-  const [selectedModel, setSelectedModel] = useState<string>('Qwen/Qwen2.5-VL-72B-Instruct');
+// 在 ChatInterface.tsx 中更新初始模型列表
+const [availableModels, setAvailableModels] = useState<ModelInfo[]>([
+  {
+    id: 'deepseek-ai/DeepSeek-V3.2',
+    name: 'DeepSeek-V3.2',
+    description: '强大的代码和文本分析模型',
+    max_tokens: 32768,
+    vision: false,
+    supports: ['代码生成', '文本分析', '文件分析', '数学推理'],
+    context_length: 128000
+  },
+  {
+    id: 'deepseek-ai/DeepSeek-OCR',
+    name: 'DeepSeek-OCR',
+    description: '视觉OCR模型，支持图像文字识别',
+    max_tokens: 32768,
+    vision: true,
+    supports: ['图像识别', 'OCR文字提取', '文本分析'],
+    context_length: 128000
+  },
+  {
+    id: 'Qwen/Qwen3-VL-32B-Instruct',
+    name: 'Qwen3-VL-32B',
+    description: '多模态视觉模型，支持推理和文件分析',
+    max_tokens: 32768,
+    vision: true,
+    supports: ['视觉理解', '复杂推理', '文件分析', '文本分析'],
+    context_length: 32000
+  },
+  {
+    id: 'Qwen/Qwen2.5-VL-72B-Instruct',
+    name: 'Qwen2.5-VL-72B',
+    description: '视觉语言模型',
+    max_tokens: 8192,
+    vision: true,
+    supports: ['图像识别', 'PDF分析'],
+    context_length: 8192
+  },
+  {
+    id: 'Qwen/Qwen2.5-72B-Instruct',
+    name: 'Qwen2.5-72B',
+    description: '纯文本语言模型',
+    max_tokens: 32768,
+    vision: false,
+    supports: ['文本对话'],
+    context_length: 32768
+  }
+]);
+
+// 更新默认选择的模型
+const [selectedModel, setSelectedModel] = useState<string>('deepseek-ai/DeepSeek-V3.2');
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 获取当前选择的模型信息
@@ -421,12 +455,26 @@ const getFileCategory = (mimeType: string): string => {
     if (isLoading && abortController) {
       stopGeneration();
     }
-    
+
     const newModel = availableModels.find(m => m.id === modelId);
     if (newModel) {
       setSelectedModel(modelId);
-      const visionStatus = newModel.vision ? '支持多模态' : '仅文本';
-      console.log(`切换模型到: ${newModel.name} (${visionStatus})`);
+
+      // 显示模型切换提示
+      const modelName = newModel.name;
+      const capabilities = newModel.supports.join(' | ');
+      const contextLength = newModel.context_length ? `上下文: ${(newModel.context_length / 1000).toFixed(0)}K` : '';
+
+      console.log(`切换模型到: ${modelName} (${capabilities}) ${contextLength}`);
+
+      // 在界面上显示简短提示
+      if (modelId.includes('DeepSeek-V3.2')) {
+        console.log('✓ 选择 DeepSeek-V3.2 - 专为代码和文本、文件分析优化');
+      } else if (modelId.includes('DeepSeek-OCR')) {
+        console.log('✓ 选择 DeepSeek-OCR - 支持图像文字识别');
+      } else if (modelId.includes('Qwen3-VL-32B')) {
+        console.log('✓ 选择 Qwen3-VL-32B - 多模态视觉推理');
+      }
     }
   };
 
