@@ -1,3 +1,4 @@
+/* src/components/FileUploader.tsx */
 import React, { useState, useRef } from 'react';
 import { uploadFile, uploadMultipleFiles, isValidFile, getFileIcon, formatFileSize, UploadedFile } from '../../utils/fileUtils';
 import './FileUploader.css';

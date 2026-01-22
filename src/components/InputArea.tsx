@@ -1,3 +1,4 @@
+// src/components/InputArea.tsx
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import FileUploader from './FileUploader/FileUploader';
 import { UploadedFile } from '../utils/fileUtils';
@@ -7,44 +8,26 @@ interface InputAreaProps {
   onSendMessage: (content: string, files?: UploadedFile[]) => void;
   isLoading: boolean;
   onStopGeneration?: () => void;
+  initialFiles?: UploadedFile[];
+  onFilesChange?: (files: UploadedFile[]) => void;
 }
 
 const InputArea: React.FC<InputAreaProps> = ({ 
   onSendMessage, 
   isLoading,
-  onStopGeneration 
+  onStopGeneration,
+  initialFiles = [],
+  onFilesChange
 }) => {
   const [input, setInput] = useState('');
-  const [attachedFiles, setAttachedFiles] = useState<UploadedFile[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<UploadedFile[]>(initialFiles);
   const [showFileUploader, setShowFileUploader] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 获取文件图标
-  const getFileIcon = (file: UploadedFile | File): string => {
-    const mimeType = file.type.toLowerCase();
-    if (mimeType.startsWith('image/')) return '🖼️';
-    if (mimeType === 'application/pdf') return '📄';
-    if (mimeType === 'application/msword' || 
-        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      return '📝';  // Word 文档图标
-    }
-    if (mimeType.startsWith('audio/')) return '🎵';
-    return '📎';
-  };
-
-  // 获取文件分类
-  const getFileCategory = (file: UploadedFile | File): string => {
-    const mimeType = file.type.toLowerCase();
-    if (mimeType.startsWith('image/')) return 'image';
-    if (mimeType === 'application/pdf') return 'pdf';
-    if (mimeType === 'application/msword' || 
-        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      return 'document';
-    }
-    if (mimeType.startsWith('audio/')) return 'audio';
-    if (mimeType.startsWith('text/')) return 'text';
-    return 'other';
-  };
+  // 同步外部传入的文件列表
+  useEffect(() => {
+    setAttachedFiles(initialFiles);
+  }, [initialFiles]);
 
   // 自动调整文本域高度
   useEffect(() => {
@@ -60,11 +43,18 @@ const InputArea: React.FC<InputAreaProps> = ({
     if ((input.trim() || attachedFiles.length > 0) && !isLoading) {
       onSendMessage(input.trim(), attachedFiles.length > 0 ? attachedFiles : undefined);
       setInput('');
-      setAttachedFiles([]);
+      clearAttachedFiles();
       setShowFileUploader(false);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
+    }
+  };
+
+  const clearAttachedFiles = () => {
+    setAttachedFiles([]);
+    if (onFilesChange) {
+      onFilesChange([]);
     }
   };
 
@@ -96,16 +86,51 @@ const InputArea: React.FC<InputAreaProps> = ({
   };
 
   const handleFilesUploaded = (files: UploadedFile[]) => {
-    setAttachedFiles(prev => [...prev, ...files]);
+    const newFiles = [...attachedFiles, ...files];
+    setAttachedFiles(newFiles);
+    if (onFilesChange) {
+      onFilesChange(newFiles);
+    }
     setShowFileUploader(false);
   };
 
   const removeFile = (fileId: string) => {
-    setAttachedFiles(prev => prev.filter(file => file.id !== fileId));
+    const newFiles = attachedFiles.filter(file => file.id !== fileId);
+    setAttachedFiles(newFiles);
+    if (onFilesChange) {
+      onFilesChange(newFiles);
+    }
   };
 
   const toggleFileUploader = () => {
     setShowFileUploader(!showFileUploader);
+  };
+
+  // 获取文件图标
+  const getFileIcon = (file: UploadedFile): string => {
+    const mimeType = file.type.toLowerCase();
+    if (mimeType.startsWith('image/')) return '🖼️';
+    if (mimeType === 'application/pdf') return '📄';
+    if (mimeType === 'application/msword' || 
+        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      return '📝';
+    }
+    if (mimeType.startsWith('audio/')) return '🎵';
+    return '📎';
+  };
+
+  // 获取文件分类
+  const getFileCategory = (file: UploadedFile): string => {
+    const mimeType = file.type.toLowerCase();
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType === 'application/pdf') return 'pdf';
+    if (mimeType === 'application/msword' || 
+        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      return 'document';
+    }
+    if (mimeType.startsWith('audio/')) return 'audio';
+    if (mimeType.startsWith('text/')) return 'text';
+    return 'other';
   };
 
   const formatFileName = (name: string) => {
@@ -129,7 +154,7 @@ const InputArea: React.FC<InputAreaProps> = ({
               <div key={file.id} className="file-preview-card">
                 <div className="file-card-header">
                   <span className="file-icon">
-                    {getFileIcon(file)}  {/* 使用新的函数 */}
+                    {getFileIcon(file)}
                   </span>
                   <button
                     className="file-remove-btn"
@@ -149,7 +174,7 @@ const InputArea: React.FC<InputAreaProps> = ({
                       {(file.size / 1024).toFixed(1)} KB
                     </span>
                     <span className="file-type">
-                      {getFileCategory(file)}  {/* 显示文件分类 */}
+                      {getFileCategory(file)}
                     </span>
                   </div>
                 </div>
@@ -170,38 +195,6 @@ const InputArea: React.FC<InputAreaProps> = ({
         </div>
       )}
 
-      <div className="examples">
-        <span className="examples-label">试试问我：</span>
-        <button 
-          className="example-button"
-          onClick={() => handleExampleClick('用JavaScript写一个简单的待办事项应用')}
-          disabled={isLoading}
-        >
-          ✨ 写代码
-        </button>
-        <button 
-          className="example-button"
-          onClick={() => handleExampleClick('解释一下量子计算的基本原理')}
-          disabled={isLoading}
-        >
-          🤔 解释概念
-        </button>
-        <button 
-          className="example-button"
-          onClick={() => handleExampleClick('帮我制定一个学习React的计划')}
-          disabled={isLoading}
-        >
-          📚 制定计划
-        </button>
-        <button 
-          className={`example-button ${showFileUploader ? 'active' : ''}`}
-          onClick={toggleFileUploader}
-          disabled={isLoading}
-          title={showFileUploader ? '隐藏文件上传' : '上传文件'}
-        >
-          {showFileUploader ? '📎 隐藏' : '📎 上传文件'}
-        </button>
-      </div>
       
       <div className="input-wrapper">
         <textarea
@@ -215,24 +208,33 @@ const InputArea: React.FC<InputAreaProps> = ({
           disabled={isLoading}
         />
         
-        <div className="input-actions">
+        <div className="button-row">
+        <button 
+          className="action-button input-clear-button"
+          onClick={handleClear}
+          disabled={(!input.trim() && attachedFiles.length === 0) || isLoading}
+          title="清空输入"
+        >
+          ✕
+        </button>
+
+        <button 
+          className="action-button file-upload-button"
+          onClick={toggleFileUploader}
+          disabled={isLoading}
+          title={showFileUploader ? '隐藏文件上传' : '上传文件'}
+        >
+          📎
+        </button>
+
+        {isLoading && onStopGeneration ? (
           <button 
-            className="action-button clear-button"
-            onClick={handleClear}
-            disabled={(!input.trim() && attachedFiles.length === 0) || isLoading}
-            title="清空输入"
+            className="action-button stop-button"
+            onClick={onStopGeneration}
+            title="停止生成 (Esc)"
           >
-            ✕
+            ⏹️
           </button>
-          
-          {isLoading && onStopGeneration ? (
-            <button 
-              className="stop-generate-button"
-              onClick={onStopGeneration}
-              title="停止生成 (Esc)"
-            >
-              ⏹️ 停止生成
-            </button>
           ) : (
             <button 
               className="send-button"
@@ -247,8 +249,11 @@ const InputArea: React.FC<InputAreaProps> = ({
               ) : (
                 <>
                   {attachedFiles.length > 0 && <span className="file-indicator">+{attachedFiles.length}</span>}
-                  <span>发送</span>
-                  <span className="send-icon">↑</span>
+                  <span className="send-icon" style={{ 
+                    fontSize: '25px', 
+                    fontWeight: 'bold',
+                    transform: 'scale(1.3)'
+                  }}>↑</span>
                 </>
               )}
             </button>
@@ -257,13 +262,7 @@ const InputArea: React.FC<InputAreaProps> = ({
       </div>
       
       <div className="input-hints">
-        <span className="hint">💡 支持Markdown格式</span>
-        <span className="hint">💻 支持代码块</span>
-        <span className="hint">📎 支持文件上传</span>
-        <span className="hint">📝 上下文长度：128K</span>
-        {isLoading && (
-          <span className="hint warning">⏹️ 按 Esc 停止生成</span>
-        )}
+        可以加入提示
       </div>
     </div>
   );

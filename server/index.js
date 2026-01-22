@@ -1,3 +1,4 @@
+// server/index.js
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -57,44 +58,21 @@ if (!API_KEY) {
 
 // 系统提示
 const SYSTEM_PROMPT = `
-你是一个教材分析与学习辅助系统。
-你的回答必须严格遵守以下规则：
-1. 只能基于我提供的【教材内容】进行回答
-2. 不得引入教材之外的知识、背景或常识
-3. 如果教材内容不足以回答问题，必须明确说明“教材中未提及”
-4. 回答应以教学清晰、逻辑严谨为目标
-5. 不要编造定义、例子或结论
-详细地将这本书的知识点进行总结，只能根据书中的内容做总结，生成知识图谱或者思维导图，每一个
-书中涉及到的知识点都要讲到`;
+你是一个基于知识储备雄厚的AI助手。
+请你遵循用户命令、满足用户需求、解答用户疑问。
+    
+重要注意事项：
+1. 当回答中包含数学公式时，请使用美元格式的LaTeX写法（例如 $E=mc^2$）。
+2. 禁止使用[]格式的LaTeX写法。
+3. 对于普通的单词、术语或数字，不要使用反引号包裹。
+4. 只对真正的代码片段使用反引号或代码块语法。
+5. 保持回答自然流畅，避免不必要的格式化。
+    
+遵循以上规则，提供清晰、专业的回答。`;
 
 // 模型特定系统提示函数
 const getModelSpecificPrompt = (modelId) => {
-  if (modelId.includes('DeepSeek-V3.2')) {
-    return `
-    你是一个基于知识储备雄厚的AI助手。
-    请你遵循用户命令、满足用户需求、解答用户疑问。
-    当回答中包含数学公式时，请使用美元格式的LaTeX写法。
-    注意！！！禁止使用[]格式的latex格式进行回答。
-    `;
-  } else if (modelId.includes('DeepSeek-OCR')) {
-        return `
-    你是一个基于知识储备雄厚的AI助手。你特别擅长：
-    1. 图像文字识别（OCR）
-    2. 从图片中提取和分析文本内容
-    3. 视觉文档理解
-    4. 文本内容分析
-      
-    请你识别图片并完整正确地提取出其中的文字信息
-    `;
-  } 
-  else {
-        return `
-    你是一个基于知识储备雄厚的AI助手。
-    请你遵循用户命令、满足用户需求、解答用户疑问。
-    当回答中包含数学公式时，请使用美元格式的LaTeX写法。
-    注意！！！禁止使用[]格式的latex格式进行回答。
-    `;
-  }
+  return SYSTEM_PROMPT;
 };
 
 // // 模型特定系统提示函数
@@ -722,47 +700,49 @@ app.post('/api/chat/stream', async (req, res) => {
 
       let buffer = '';
       
-      response.data.on('data', (chunk) => {
-        const chunkStr = chunk.toString();
-        buffer += chunkStr;
-        
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        
-        for (const line of lines) {
-          if (line.trim() === '') continue;
-          
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            
-            if (data === '[DONE]') {
-              res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-              res.end();
-              return;
-            }
+    response.data.on('data', (chunk) => {
+      const chunkStr = chunk.toString();
+      buffer += chunkStr;
 
-            try {
-              const parsed = JSON.parse(data);
-              
-              if (parsed.choices && parsed.choices[0]?.delta?.content) {
-                const content = parsed.choices[0].delta.content;
-                res.write(`data: ${JSON.stringify({ 
-                  type: 'chunk', 
-                  content: content
-                })}\n\n`);
-              }
-            } catch (e) {
-              console.warn('解析JSON失败:', e.message, '原始数据:', data);
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.trim() === '') continue;
+
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+
+          if (data.trim() === '[DONE]') {
+            console.log('✅ 收到完成标记 [DONE]');
+            // 发送完成事件
+            res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+            continue;  // 使用continue而不是return
+          }
+        
+          try {
+            const parsed = JSON.parse(data);
+
+            if (parsed.choices && parsed.choices[0]?.delta?.content) {
+              const content = parsed.choices[0].delta.content;
+              res.write(`data: ${JSON.stringify({ 
+                type: 'chunk', 
+                content: content
+              })}\n\n`);
             }
+          } catch (e) {
+            console.warn('解析JSON失败:', e.message, '原始数据:', data);
           }
         }
-      });
+      }
+    });
 
-      response.data.on('end', () => {
-        console.log('🔚 流式响应结束');
-        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-        res.end();
-      });
+    response.data.on('end', () => {
+      console.log('🔚 流式响应结束');
+      // 确保发送完成事件
+      res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+      res.end();
+    });
 
       response.data.on('error', (error) => {
         console.error('❌ 流式传输错误:', error.message);
@@ -818,15 +798,6 @@ app.get('/api/models', (req, res) => {
         context_length: 128000
       },
       {
-        id: 'deepseek-ai/DeepSeek-OCR',
-        name: 'DeepSeek-OCR',
-        description: '视觉OCR模型，支持图像文字识别',
-        max_tokens: 32768,
-        vision: true,
-        supports: ['图像识别', 'OCR文字提取', '文本分析'],
-        context_length: 128000
-      },
-      {
         id: 'Qwen/Qwen3-VL-32B-Instruct',
         name: 'Qwen3-VL-32B',
         description: '多模态视觉模型，支持推理和文件分析',
@@ -844,15 +815,6 @@ app.get('/api/models', (req, res) => {
         vision: true,
         supports: ['图像识别', '文本理解'],
         context_length: 8192
-      },
-      {
-        id: 'Qwen/Qwen2.5-72B-Instruct',
-        name: 'Qwen2.5-72B',
-        description: '纯文本语言模型',
-        max_tokens: 32768,
-        vision: false,
-        supports: ['文本对话', '代码生成'],
-        context_length: 32768
       }
     ]
   });

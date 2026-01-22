@@ -1,4 +1,4 @@
-// utils/fileProcessor.js
+// server/utils/fileProcessor.js
 const fs = require('fs').promises;
 const path = require('path');
 const pdfParse = require('pdf-parse');

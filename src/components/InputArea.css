@@ -1,5 +1,6 @@
 /* src/components/InputArea.css */
 
+/* =============== 1. 基础容器样式 =============== */
 .input-area {
   padding: 20px;
   background: white;
@@ -10,7 +11,7 @@
   flex-shrink: 0;
 }
 
-/* 已附加的文件预览 */
+/* =============== 2. 文件预览区域样式 =============== */
 .attached-files-section {
   background: #f8f9fa;
   border-radius: 12px;
@@ -146,12 +147,12 @@
   letter-spacing: 0.5px;
 }
 
-/* 文件上传器区域 */
+/* =============== 3. 文件上传器区域样式 =============== */
 .file-uploader-section {
   animation: slideDown 0.3s ease;
 }
 
-/* 示例按钮区域 */
+/* =============== 4. 示例按钮区域样式 (已移除) =============== */
 .examples {
   display: flex;
   flex-wrap: wrap;
@@ -197,20 +198,20 @@
   transform: none;
 }
 
-/* 输入区域 */
+/* =============== 5. 输入区域整体布局 =============== */
 .input-wrapper {
   display: flex;
-  gap: 12px;
-  align-items: flex-end;
+  width: 100%; 
 }
 
 .message-input {
   flex: 1;
-  min-height: 56px;
-  max-height: 150px;
-  padding: 16px 20px;
+  min-height: 70px;
+  max-height: 120px;
+  padding: 12px 16px;
+  width: 100%;
   border: 1px solid #e0e0e0;
-  border-radius: 28px;
+  border-radius: 22px;
   font-size: 16px;
   line-height: 1.5;
   resize: none;
@@ -231,16 +232,17 @@
   background: #f5f5f5;
 }
 
-/* 输入操作按钮 */
+/* =============== 6. 输入操作按钮区域 (需要修改的部分) =============== */
 .input-actions {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
+/* =============== 7. 通用按钮样式 (需要修改的部分) =============== */
 .action-button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #f5f5f5;
   border: none;
@@ -263,13 +265,14 @@
   cursor: not-allowed;
 }
 
+/* =============== 8. 发送按钮样式 (需要修改的部分) =============== */
 .send-button {
-  height: 56px;
-  min-width: 100px;
+  height: 40px;
+  width: 40px;
   background: linear-gradient(135deg, #a777e3, #6e8efb);
   color: white;
   border: none;
-  border-radius: 28px;
+  border-radius: 50%;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -277,7 +280,6 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 0 24px;
   transition: all 0.3s;
   box-shadow: 0 2px 8px rgba(167, 119, 227, 0.3);
 }
@@ -326,14 +328,14 @@
   margin-top: 2px;
 }
 
-/* 停止生成按钮 */
+/* =============== 9. 停止生成按钮样式 (需要修改的部分) =============== */
 .stop-generate-button {
-  height: 56px;
-  min-width: 140px;
+  height: 40px;
+  width: 40px;
   background: linear-gradient(135deg, #ff6b6b, #ee5a52);
   color: white;
   border: none;
-  border-radius: 28px;
+  border-radius: 50%;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -367,7 +369,7 @@
   }
 }
 
-/* 提示信息 */
+/* =============== 10. 提示信息样式 =============== */
 .input-hints {
   display: flex;
   flex-wrap: wrap;
@@ -394,7 +396,7 @@
   50% { opacity: 1; }
 }
 
-/* 响应式调整 */
+/* =============== 11. 响应式调整 =============== */
 @media (max-width: 768px) {
   .input-area {
     padding: 16px;
@@ -421,3 +423,79 @@
     justify-content: flex-end;
   }
 }
+
+/* =============== 12. 新增的按钮行样式 (需要添加) =============== */
+.button-row {
+  display: flex;
+  justify-content: flex-end; /* 按钮靠右对齐 */
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px;
+  margin-top: 8px;
+}
+/* =============== 13. 各类按钮的独立样式 (需要修改和添加) =============== */
+/* 文件上传按钮 */
+.file-upload-button {
+  background: rgba(110, 142, 251, 0.1);
+  color: #6e8efb;
+  border: 1px solid rgba(110, 142, 251, 0.3);
+}
+
+.file-upload-button:hover:not(:disabled) {
+  background: rgba(110, 142, 251, 0.2);
+  transform: scale(1.05);
+}
+
+/* =============== 清空按钮样式 =============== */
+/* 当有输入时，按钮更明显 */
+.input-clear-button:not(:disabled) {
+  background: #f87979c5 !important; /* 完全红色的背景 */
+  color: white !important;
+}
+
+.input-clear-button:hover:not(:disabled) {
+  background: #f75e5e !important; /* 悬停时更深的红色 */
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.486);
+}
+
+.input-clear-button:disabled {
+  background: rgba(200, 200, 200, 0.557);
+  color: #646464;
+  border-color: rgba(200, 200, 200, 0.3);
+  opacity: 0.5;
+  box-shadow: none;
+}
+/* 发送按钮 */
+.send-button {
+  background: linear-gradient(135deg, #a777e3, #6e8efb);
+  color: white;
+  box-shadow: 0 2px 8px rgba(143, 74, 228, 0.575);
+}
+
+.send-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #9a6bd9, #5a7dfa);
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(168, 114, 234, 0.74);
+}
+
+.send-button:disabled {
+  background: #e0e0e0;
+  color: #999;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* 停止按钮 */
+.stop-button {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  color: rgb(253, 251, 251);
+  animation: pulse 1.5s infinite;
+}
+
+.stop-button:hover {
+  background: linear-gradient(135deg, #ff5252, #e53935);
+  transform: scale(1.05);
+  animation: none;
+}
+

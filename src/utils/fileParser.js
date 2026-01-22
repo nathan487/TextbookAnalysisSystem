@@ -1,4 +1,4 @@
-// utils/fileParser.js
+// src/utils/fileParser.js
 const fs = require('fs').promises;
 const path = require('path');
 const { createWorker } = require('tesseract.js');

@@ -112,44 +112,6 @@
   position: relative;
 }
 
-.api-toggle-button {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 4px 12px;
-  border-radius: 15px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.3s;
-  margin-left: 10px;
-}
-
-.api-toggle-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
-}
-
-.api-notice {
-  background: linear-gradient(135deg, #4CAF50, #8BC34A);
-  color: white;
-  padding: 10px 20px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 500;
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .stop-button {
   background: linear-gradient(135deg, #ff6b6b, #ee5a52);
   color: white;
@@ -167,11 +129,6 @@
   background: linear-gradient(135deg, #ff5252, #e53935);
   transform: scale(1.05);
   animation: none;
-}
-
-.api-toggle-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .clear-button:disabled {
@@ -221,4 +178,254 @@
   .status-indicator {
     min-width: auto;
   }
+}
+
+/* 在ChatInterface.css中添加以下样式 */
+
+/* 文件预览区域 */
+.file-previews-section {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clear-files-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-files-btn:hover:not(:disabled) {
+  background: #ef4444;
+  color: white;
+}
+
+.clear-files-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.file-previews-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-previews-hint {
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #475569;
+}
+
+.file-types {
+  font-size: 12px;
+  color: #94a3b8;
+  background: rgba(100, 116, 139, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* 模型徽章样式 */
+.status-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.status-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.vision {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.suggestions-button {
+  margin-right: 10px;
+}
+
+
+/* 在 ChatInterface.css 中添加以下移动端样式 */
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .chat-interface {
+    height: 100vh;
+    max-width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  
+  .chat-header {
+    padding: 12px 16px;
+    flex-direction: column;
+    gap: 8px;
+    min-height: auto;
+  }
+  
+  .header-left, .header-right {
+    width: 100%;
+  }
+  
+  .chat-header h1 {
+    font-size: 18px;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .model-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .model-select {
+    flex: 1;
+    max-width: none;
+    font-size: 14px;
+    padding: 6px 12px;
+    margin-right: 8px;
+  }
+  
+  .status-badges {
+    flex-shrink: 0;
+  }
+  
+  .stop-button {
+    font-size: 11px;
+    padding: 4px 8px;
+    margin-left: 0;
+  }
+  
+  .suggestions-button,
+  .clear-button {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+  
+  .chat-messages-container {
+    padding: 12px;
+  }
+}
+
+
+
+/* 在 ChatInterface.css 中添加以下样式 */
+
+/* PDF 导出按钮样式 */
+#chat-pdf-export-btn {
+  transition: all 0.3s ease;
+}
+
+#chat-pdf-export-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+#chat-pdf-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 消息选中样式（供PDF导出使用） */
+.message-bubble-container.pdf-export-selected {
+  outline: 3px solid rgba(37, 99, 235, 0.6);
+  position: relative;
+  border-radius: 12px;
+  margin: 4px;
+}
+
+.message-bubble-container.pdf-export-selected::before {
+  content: "✓ 已选中";
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: #2563eb;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 10;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .header-right {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+  
+  #chat-pdf-export-btn {
+    order: 2;
+    margin-left: 0;
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  
+  .clear-button.suggestions-button {
+    order: 0;
+  }
+  
+  .clear-button {
+    order: 1;
+  }
+}
+
+
+/* 在 ChatInterface.css 中添加，确保消息可点击 */
+.chat-messages-container {
+  position: relative;
+  z-index: 1; /* 确保在侧边栏之下 */
+}
+
+/* 当选择模式激活时，添加视觉提示 */
+.message-bubble-container.selectable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.message-bubble-container.selectable:hover {
+  background-color: rgba(37, 99, 235, 0.05);
+}
+
+/* 主按钮的活跃状态 */
+.pdf-export-button.active {
+  background: #1d4ed8;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
 }
